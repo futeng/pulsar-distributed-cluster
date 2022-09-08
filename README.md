@@ -4,7 +4,7 @@ Script to deploy pulsar in distributed cluster.
 
 1. The script requires a dispatch machine:
 	- to deploy the httpd service for installation package, script, and configuration distribution;
-	- install the Prometheus and Grafana services and configure them to be called Pulsar Client.
+	- install the Prometheus and Grafana services and configured as a Pulsar Client.
 2. The script also contains all the installation packages, please refer to the Get Ready section for manual download.
 3. Different clusters have different environment information, especially the data directory, and need to modify the depoly.sh script manually.
 
