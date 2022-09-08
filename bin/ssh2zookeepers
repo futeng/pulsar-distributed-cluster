@@ -1,0 +1,7 @@
+#!/bin/bash
+# ssh2all.sh date
+for host in $(cat /usr/local/bin/pulsar-hosts-only-zookeepers)
+do
+  echo "[$host] exec: $@"
+  ssh -i /home/pulsar/.ssh/pulsar-cloud.pem $host "$@"
+done

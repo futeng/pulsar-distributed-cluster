@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh -i /home/pulsar/.ssh/pulsar-cloud.pem pulsar@pulsar-bookie03

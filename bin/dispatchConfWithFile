@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# dispatchConfWithFile broker init.txt
+# dispatchConfWithFile bookie init.txt
+# dispatchConfWithFile zookeeper init.txt
+
+
+usage() {
+    cat <<EOF
+Usage: dispatchConfWithFile (broker|bookie|zookeeper) <filename> 
+where command is one of:
+    broker              Update all broker.conf
+    bookie              Update all bookkeeper.conf
+    zookeeper           Update all zookeeper.conf
+
+filename is a segment from conf.
+EOF
+}
+
+if [ $# = 0 ]; then
+    usage
+    exit 1
+elif [ $# = 1 ]; then
+    if [ $1 == "--help" -o $1 == "-h" ]; then
+        usage
+        exit 1
+    else
+        echo "Error: no enough arguments provided."
+        usage
+        exit 1
+    fi
+fi
+
+
+component=$1
+shift
+filename=$1
+shift
+
+echo $component
+echo $filename
+
+case $component in
+    (broker)
+        echo "Update broker.conf merge with $filename ..."
+        ;;
+    (bookie)
+        echo "Update bookkeeper.conf merge with $filename ..."
+        ;;
+    (zookeeper)
+        echo "Update zookeeper.conf merge with $filename ..."
+        ;;
+    (*)
+        echo "Error: unknown service merge with $filename"
+        usage
+        exit 1
+        ;;
+esac
+
+
+# need replace
+DISPATCH_HOST="test-pulsar-client"
+HTTPD_PULSAR_CONF_DIR="/var/www/html/pulsar/conf"
+mkdir -p $HTTPD_PULSAR_CONF_DIR
+
+cp $filename $HTTPD_PULSAR_CONF_DIR
+
+case $component in
+  (broker)
+  	ssh2brokers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
+  	ssh2brokers "sh replace-conf.sh broker.conf $filename"
+    ;;
+
+  (bookie)
+  	ssh2bookies "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
+  	ssh2bookies "sh replace-conf.sh bookkeeper.conf $filename"
+    ;;
+
+  (zookeeper)
+  	ssh2zookeepers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
+  	ssh2zookeepers "sh replace-conf.sh zookeeper.conf $filename"
+    ;;
+
+  (*)
+    usage
+    exit 1
+    ;;
+esac
+
