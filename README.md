@@ -40,6 +40,8 @@ wget https://github.com/streamnative/kop/releases/download/v2.10.1.7/pulsar-prot
 wget https://github.com/prometheus/node_exporter/releases/download/v1.4.0-rc.0/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz
 wget https://github.com/prometheus/prometheus/releases/download/v2.38.0/prometheus-2.38.0.linux-amd64.tar.gz
 wget https://dl.grafana.com/enterprise/release/grafana-enterprise-9.1.2.linux-amd64.tar.gz
+
+cd ..
 # cp jdk manually
 # cp jdk-11.0.15.1_linux-x64_bin.tar.gz pkgs/
 
