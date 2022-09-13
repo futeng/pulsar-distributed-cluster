@@ -58,7 +58,7 @@ esac
 
 
 # need replace
-DISPATCH_HOST="test-pulsar-client"
+DISPATCH_HOST="pulsar-client"
 HTTPD_PULSAR_CONF_DIR="/var/www/html/pulsar/conf"
 mkdir -p $HTTPD_PULSAR_CONF_DIR
 
