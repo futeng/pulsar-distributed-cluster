@@ -196,6 +196,7 @@ initZookeeperConf() {
 initPulsarMetadata() {
 	if [[ $needInitializeClusterMetadata == "true" ]]; then
 		cd $pulsar_home
+		source /etc/profile
 		bin/pulsar initialize-cluster-metadata \
   			--cluster $cluster_name \
   			--zookeeper $zkQuorum \
