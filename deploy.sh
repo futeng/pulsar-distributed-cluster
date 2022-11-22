@@ -120,13 +120,16 @@ initClientTools() {
 copyDeployTools() {
 
 	sudo cp bin/* /usr/local/bin/
+	sudo cp tmpbin/* /usr/local/bin/
 	sudo chown -R $user:$user /usr/local/bin/*
 	sudo chmod u+x /usr/local/bin/*.sh
-	sudo chmod u+x /usr/local/bin/ssh*
+	sudo chmod u+x /usr/local/bin/go*
+	sudo chmod u+x /usr/local/bin/dispatchConfWithFile
 	
-	cp -R pkgs/* /var/www/html/
-	cp -R service/* /var/www/html/
-
+	cp -R pkgs /var/www/html/pulsar/
+	cp -R service /var/www/html/pulsar/
+	cp -R scripts /var/www/html/pulsar/
+	cp -R conf /var/www/html/pulsar/
 }
 
 
@@ -443,7 +446,7 @@ installGrafana() {
 # Prepare Client Node
 startHttpd
 initClientTools
-# copyDeployTools
+copyDeployTools
 
 # # JDK and prepare tarball
 # installJDK $needInstallJDK11
