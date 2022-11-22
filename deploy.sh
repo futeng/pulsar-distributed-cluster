@@ -61,6 +61,7 @@ check_port() {
 # Client tools will deploy to /usr/local/bin
 initClientTools() {
 
+
 	sed -i "s/DISPATCH_HOST=\"pulsar-client\"/DISPATCH_HOST=\"$dispatch_host\"/" bin/dispatchConfWithFile
 
 	if [ -d ./tmpbin ] ; then
@@ -164,7 +165,7 @@ startHttpd() {
 installJDK() {
 	need=$1
 	if [[ $need == "true" ]]; then
-		ssh2all "wget -q $dispatch_host/install-jdk11.sh -O install-jdk11.sh"
+		ssh2all "wget -q $dispatch_host/pulsar/scripts/install-jdk11.sh -O install-jdk11.sh"
 		ssh2all "sudo sh install-jdk11.sh"
 		ssh2all "java -version"
 		ssh2all "source /etc/profile; java -version"
@@ -173,30 +174,35 @@ installJDK() {
 
 dispatchPkgs() {
 	ssh2all "rm -rf ~/pulsar-node"
-	ssh2all "wget -q $dispatch_host/replace-conf.sh -O replace-conf.sh"
-	ssh2all "wget -q $dispatch_host/apache-pulsar-2.10.1.7-bin.tar.gz -O apache-pulsar-2.10.1.7-bin.tar.gz" 
-	ssh2all "tar zxf apache-pulsar-2.10.1.7-bin.tar.gz"
-	ssh2all "mv apache-pulsar-2.10.1.7 $pulsar_deploy_dir"
-	ssh2all "rm apache-pulsar-2.10.1.7-bin.tar.gz"
+	echo $pulsar_tarball
+	ssh2all "wget -q $dispatch_host/pulsar/pkgs/$pulsar_tarball -O $pulsar_tarball" 
+	ssh2all "tar zxf $pulsar_tarball"
+	ssh2all "mv $pulsar_version $pulsar_deploy_dir"
+	ssh2all "wget -q $dispatch_host/pulsar/scripts/replace-conf.sh -O $pulsar_deploy_dir/bin/replace-conf.sh"
+	ssh2all "chmod u+x $pulsar_deploy_dir/bin/replace-conf.sh"
+	ssh2all "rm $pulsar_tarball"
+	ssh2all "mkdir -p $pulsar_home/conf.version"
+	ssh2all "mkdir -p $pulsar_home/conf.bak"
 }
 
 initZookeeperConf() {
 	initZKConf="init-zk.conf"
 
-	echo "dataDir=$data_dir" > $initZKConf
-	echo "admin.serverPort=9990" >> $initZKConf
-	echo "metricsProvider.httpPort=7000" >> $initZKConf
-	echo "clientPort=2181" >> $initZKConf
+	echo "dataDir=$zk_data_dir" > $initZKConf
+	echo "admin.serverPort=$zk_admin_serverPort" >> $initZKConf
+	echo "metricsProvider.httpPort=$zk_metricsProvider_httpPort" >> $initZKConf
+	echo "clientPort=$zk_clientPort" >> $initZKConf
 	
 	length=${#zookeeper_nodes[@]}
 	for (( j=0; j<${length}; j++ ));
 	do
 		# printf  "Current index %d with value %s\n" $j "${zookeeper_nodes[$j]}"
-		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p $data_dir; sudo chown -R $user:$user $data_dir; echo $j > $data_dir/myid"
-		echo "server.$j=${zookeeper_nodes[$j]}:2888:3888" >> $initZKConf
+		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p $zk_data_dir; sudo chown -R $user:$user $zk_data_dir; echo $j > $zk_data_dir/myid"
+		echo "server.$j=${zookeeper_nodes[$j]}:$zk_2888:$zk_3888" >> $initZKConf
 	done
 	# cat $initZKConf
 	dispatchConfWithFile zookeeper $initZKConf
+	rm $initZKConf
 }
 
 initPulsarMetadata() {
@@ -223,8 +229,8 @@ initPulsarMetadata() {
 initBookieConf() {
 	initBookiesConf="init-bk.conf"
 	
-	echo "journalDirectory=/journal01,/journal02" > $initBookiesConf
-	echo "ledgerDirectories=/ledger01,/ledger02" >> $initBookiesConf
+	echo "journalDirectory=$bk_journalDirectory" > $initBookiesConf
+	echo "ledgerDirectories=$bk_ledgerDirectories" >> $initBookiesConf
 	echo "zkServers=$zkQuorum" >> $initBookiesConf
 	echo "httpServerEnabled=true" >> $initBookiesConf
 	echo "autoRecoveryDaemonEnabled=false" >> $initBookiesConf
@@ -233,8 +239,8 @@ initBookieConf() {
 	for (( j=0; j<${length}; j++ ));
 	do
 		# printf  "Current index %d with value %s\n" $j "${zookeeper_nodes[$j]}"
-		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p /{journal01,journal02,ledger01,ledger02}"
-		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo chown -R $user:$user /journal01; sudo chown -R $user:$user /journal02; sudo chown -R $user:$user /ledger01; sudo chown -R $user:$user /ledger02"
+		$ssh_cmd $user@"${bookie_nodes[$j]}" "sudo mkdir -p {$bk_journalDirectory,$bk_ledgerDirectories}"
+		$ssh_cmd $user@"${bookie_nodes[$j]}" "sudo chown -R $user:$user {$bk_journalDirectory,$bk_ledgerDirectories}"
 	done
 	
 	dispatchConfWithFile bookie $initBookiesConf	
@@ -268,9 +274,9 @@ initBrokerConf() {
 	echo "topicLevelPoliciesEnabled=true" >> $initBrokerConf
 	echo "maxMessageSize=5242880" >> $initBrokerConf
 	echo "zooKeeperSessionTimeoutMillis=30000" >> $initBrokerConf
-	echo "managedLedgerDefaultEnsembleSize=2" >> $initBrokerConf
-	echo "managedLedgerDefaultWriteQuorum=2" >> $initBrokerConf
-	echo "managedLedgerDefaultAckQuorum=2" >> $initBrokerConf
+	echo "managedLedgerDefaultEnsembleSize=$broker_managedLedgerDefaultEnsembleSize" >> $initBrokerConf
+	echo "managedLedgerDefaultWriteQuorum=$broker_managedLedgerDefaultWriteQuorum" >> $initBrokerConf
+	echo "managedLedgerDefaultAckQuorum=$broker_managedLedgerDefaultAckQuorum" >> $initBrokerConf
 	echo "bookkeeperClientMinNumRacksPerWriteQuorum=1" >> $initBrokerConf
 	echo "brokerDeleteInactiveTopicsEnabled=false" >> $initBrokerConf
 	echo "allowAutoTopicCreationType=partitioned" >> $initBrokerConf
@@ -449,33 +455,33 @@ initClientTools
 copyDeployTools
 
 # # JDK and prepare tarball
-# installJDK $needInstallJDK11
-# dispatchPkgs
+installJDK $needInstallJDK11
+dispatchPkgs
 
 # # Deploy and start Zookeeper
-# initZookeeperConf
-# startAllZookeepers.sh
+initZookeeperConf
+startAllZookeepers.sh
 
 # # Init Pulsar metadata in zookeeper
-# initPulsarMetadata
+initPulsarMetadata
 
 # # Deploy and start Booies
-# initBookieConf
-# startAllBookies.sh
-# testBookies
+initBookieConf
+startAllBookies.sh
+testBookies
 
 # # Deploy and start Brokers
-# initBrokerConf
-# startAllBrokers.sh
-# replaceClientConf
-# crateTenantAndNamespace
-# testBrokers
+initBrokerConf
+startAllBrokers.sh
+replaceClientConf
+crateTenantAndNamespace
+testBrokers
 
 # # Deploy monitors 
-# installNodeExporter
-# testDispachHostNodeExporter
-# installProm
-# installGrafana
+installNodeExporter
+testDispachHostNodeExporter
+installProm
+installGrafana
 
-# printHello
+printHello
 

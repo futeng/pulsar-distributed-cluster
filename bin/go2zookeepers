@@ -5,5 +5,5 @@
 for host in $(cat /usr/local/bin/pulsar-hosts-only-zookeepers)
 do
   echo "[$host] exec: $@"
-  ssh_cmd $host "$@"
+  $ssh_cmd $host "$@"
 done

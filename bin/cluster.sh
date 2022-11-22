@@ -27,7 +27,28 @@ pulsar_base="/home/futeng"
 pulsar_deploy_dir="pulsar-node"
 pulsar_home=$pulsar_base/$pulsar_deploy_dir
 
-# Set zookeeper data directory
-data_dir="/data/zkdata"
+
 # Pulsar cluster name 
 cluster_name="sn"
+
+# tarball in pkgs dir
+pulsar_tarball="apache-pulsar-2.10.1.7-bin.tar.gz"
+pulsar_version="apache-pulsar-2.10.1.7"
+
+
+# Zookeeper 
+zk_data_dir="/data/pulsar/zkdata"
+zk_admin_serverPort="9990"
+zk_metricsProvider_httpPort="7000"
+zk_clientPort="2181"
+zk_2888="2888"
+zk_3888="3888"
+
+# Bookies
+bk_journalDirectory="/data/pulsar/journal"
+bk_ledgerDirectories="/data/pulsar/ledger"
+
+# Brokers
+broker_managedLedgerDefaultEnsembleSize="2"
+broker_managedLedgerDefaultWriteQuorum="2"
+broker_managedLedgerDefaultAckQuorum="2"

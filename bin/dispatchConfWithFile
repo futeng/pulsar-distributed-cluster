@@ -2,7 +2,7 @@
 # dispatchConfWithFile broker init.txt
 # dispatchConfWithFile bookie init.txt
 # dispatchConfWithFile zookeeper init.txt
-
+. "cluster.sh"
 
 usage() {
     cat <<EOF
@@ -66,18 +66,18 @@ cp $filename $HTTPD_PULSAR_CONF_DIR
 
 case $component in
   (broker)
-  	ssh2brokers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
-  	ssh2brokers "sh replace-conf.sh broker.conf $filename"
+  	ssh2brokers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O $pulsar_home/conf.version/$filename"
+  	ssh2brokers "sh $pulsar_home/bin/replace-conf.sh broker.conf $filename"
     ;;
 
   (bookie)
-  	ssh2bookies "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
-  	ssh2bookies "sh replace-conf.sh bookkeeper.conf $filename"
+  	ssh2bookies "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O $pulsar_home/conf.version/$filename"
+  	ssh2bookies "sh $pulsar_home/bin/replace-conf.sh bookkeeper.conf $filename"
     ;;
 
   (zookeeper)
-  	ssh2zookeepers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O /home/pulsar/$filename"
-  	ssh2zookeepers "sh replace-conf.sh zookeeper.conf $filename"
+  	ssh2zookeepers "wget -q $DISPATCH_HOST/pulsar/conf/$filename -O $pulsar_home/conf.version/$filename"
+  	ssh2zookeepers "sh $pulsar_home/bin/replace-conf.sh zookeeper.conf $filename"
     ;;
 
   (*)
