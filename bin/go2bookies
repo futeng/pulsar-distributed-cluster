@@ -1,7 +1,9 @@
 #!/bin/bash
 # ssh2all.sh date
+. cluster.sh
+
 for host in $(cat /usr/local/bin/pulsar-hosts-only-bookies)
 do
   echo -e "[$host] \t exec> $@"
-  ssh -i /home/pulsar/.ssh/pulsar-cloud.pem $host "$@"
+  $ssh_cmd $host "$@"
 done

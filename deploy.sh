@@ -34,26 +34,7 @@ echo "                                                   ";
 
 #####################################################
 ################# Custom variables ##################
-
-needInstallJDK11="false"
-needInitializeClusterMetadata="true"
-
-all_nodes=("test-pulsar-client" "test-pulsar-node1" "test-pulsar-node2")
-bookie_nodes=("test-pulsar-client" "test-pulsar-node1" "test-pulsar-node2")
-zookeeper_nodes=("test-pulsar-client" "test-pulsar-node1" "test-pulsar-node2")
-broker_nodes=("test-pulsar-node1" "test-pulsar-node2")
-dispatch_host="test-pulsar-client"
-
-# The user used by the deployment.
-user="pulsar"
-pulsar_base="/home/pulsar"
-pulsar_deploy_dir="pulsar-node"
-pulsar_home=$pulsar_base/$pulsar_deploy_dir
-
-# Set zookeeper data directory
-data_dir="/zkdata"
-# Pulsar cluster name 
-cluster_name="sn"
+. "bin/cluster.sh"
 
 #####################################################
 ########## System function and variables ############
@@ -79,59 +60,61 @@ check_port() {
 
 # Client tools will deploy to /usr/local/bin
 initClientTools() {
+
 	sed -i "s/DISPATCH_HOST=\"pulsar-client\"/DISPATCH_HOST=\"$dispatch_host\"/" bin/dispatchConfWithFile
-	
-	rm bin/pulsar-hosts
+
+	if [ -d ./tmpbin ] ; then
+		rm -rf ./tmpbin
+	fi
+	mkdir ./tmpbin
+
 	length=${#all_nodes[@]}
 	for (( j=0; j<${length}; j++ ));
 	do
-		echo "${all_nodes[$j]}" >> bin/pulsar-hosts
+		echo "${all_nodes[$j]}" >> ./tmpbin/pulsar-hosts
 	done
 	
-	rm bin/pulsar-hosts-only-bookies
 	length=${#bookie_nodes[@]}
 	for (( j=0; j<${length}; j++ ));
 	do
-		echo "${bookie_nodes[$j]}" >> bin/pulsar-hosts-only-bookies
-		echo "#!/bin/bash" > bin/"ssh2bookie$j"
-		echo "ssh -i /home/pulsar/.ssh/pulsar-cloud.pem pulsar@${bookie_nodes[$j]}" >> bin/"ssh2bookie$j"
+		echo "${bookie_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-bookies
+		echo "#!/bin/bash" > ./tmpbin/"go2bookie$j"
+		echo "$ssh_cmd pulsar@${bookie_nodes[$j]}" >> ./tmpbin/"go2bookie$j"
 	done
 	
-	rm bin/pulsar-hosts-only-brokers
 	length=${#broker_nodes[@]}
 	for (( j=0; j<${length}; j++ ));
 	do
-		echo "${broker_nodes[$j]}" >> bin/pulsar-hosts-only-brokers
-		echo "#!/bin/bash" > bin/"ssh2broker$j"
-		echo "ssh -i /home/pulsar/.ssh/pulsar-cloud.pem pulsar@${broker_nodes[$j]}" >> bin/"ssh2broker$j"
+		echo "${broker_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-brokers
+		echo "#!/bin/bash" > ./tmpbin/"go2broker$j"
+		echo "$ssh_cmd pulsar@${broker_nodes[$j]}" >> ./tmpbin/"go2broker$j"
 	done
 	
-	rm bin/pulsar-hosts-only-zookeepers
 	length=${#zookeeper_nodes[@]}
 	for (( j=0; j<${length}; j++ ));
 	do
-		echo "${zookeeper_nodes[$j]}" >> bin/pulsar-hosts-only-zookeepers
-		echo "#!/bin/bash" > bin/"ssh2zk$j"
-		echo "ssh -i /home/pulsar/.ssh/pulsar-cloud.pem pulsar@${zookeeper_nodes[$j]}" >> bin/"ssh2zk$j"
+		echo "${zookeeper_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-zookeepers
+		echo "#!/bin/bash" > ./tmpbin/"go2zk$j"
+		echo "$ssh_cmd pulsar@${zookeeper_nodes[$j]}" >> ./tmpbin/"go2zk$j"
 	done
 	
-	echo "#!/bin/bash" > bin/startAllBookies.sh
-	echo "ssh2bookies \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start bookie\"" >> bin/startAllBookies.sh
+	echo "#!/bin/bash" > ./tmpbin/startAllBookies.sh
+	echo "go2bookies \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start bookie\"" >> ./tmpbin/startAllBookies.sh
 	
-	echo "#!/bin/bash" > bin/startAllBrokers.sh
-	echo "ssh2brokers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start broker\"" >> bin/startAllBrokers.sh
+	echo "#!/bin/bash" > ./tmpbin/startAllBrokers.sh
+	echo "go2brokers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start broker\"" >> ./tmpbin/startAllBrokers.sh
 	
-	echo "#!/bin/bash" > bin/startAllZookeepers.sh
-	echo "ssh2zookeepers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start zookeeper\"" >> bin/startAllZookeepers.sh
+	echo "#!/bin/bash" > ./tmpbin/startAllZookeepers.sh
+	echo "go2zookeepers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon start zookeeper\"" >> ./tmpbin/startAllZookeepers.sh
 	
-	echo "#!/bin/bash" > bin/stopAllBookies.sh
-	echo "ssh2bookies \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop bookie\"" >> bin/stopAllBookies.sh
+	echo "#!/bin/bash" > ./tmpbin/stopAllBookies.sh
+	echo "go2bookies \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop bookie\"" >> ./tmpbin/stopAllBookies.sh
 	
-	echo "#!/bin/bash" > bin/stopAllBrokers.sh
-	echo "ssh2brokers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop broker\"" >> bin/stopAllBrokers.sh
+	echo "#!/bin/bash" > ./tmpbin/stopAllBrokers.sh
+	echo "go2brokers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop broker\"" >> ./tmpbin/stopAllBrokers.sh
 	
-	echo "#!/bin/bash" > bin/stopAllZookeepers.sh
-	echo "ssh2zookeepers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop zookeeper\"" >> bin/stopAllZookeepers.sh
+	echo "#!/bin/bash" > ./tmpbin/stopAllZookeepers.sh
+	echo "go2zookeepers \"source /etc/profile; $pulsar_home/bin/pulsar-daemon stop zookeeper\"" >> ./tmpbin/stopAllZookeepers.sh
 }
 
 copyDeployTools() {
@@ -146,13 +129,33 @@ copyDeployTools() {
 
 }
 
+
+# 所有的文件都放在子目录 http://node/pulsar 下面
 startHttpd() {
-	sudo yum -y install httpd
+
+	sudo yum list httpd > ./httpd-yum-list.log 2>&1
+	if [[ -f ./httpd-yum-list.log && $(grep -c "httpd.x86_64" ./httpd-yum-list.log) -ne 0 ]]; then
+		rm ./httpd-yum-list.log
+	else
+		sudo yum -y install httpd
+	fi
+
 	sudo systemctl start httpd
 	sudo systemctl enable httpd
-	sudo systemctl status httpd
-	sudo chown -R  $user:$user /var/www/html
 	sudo mkdir -p /var/www/html/pulsar/conf
+	sudo chown -R  $user:$user /var/www/html/pulsar
+	echo "httpd" > /var/www/html/pulsar/httpd.html 
+
+	wget -q $dispatch_host/pulsar/httpd.html -O httpd.html
+
+	if [[ -f ./httpd.html && $(grep -c "httpd" ./httpd.html) -ne 0 ]]; then
+		${echo_with_date} "[1][√] The httpd service has been successfully started."
+		rm ./httpd.html
+	else
+		${echo_with_date} "[1][x] ERROR: The httpd service failed to start."
+		sudo systemctl status httpd 
+		exit 1
+	fi
 }
 
 installJDK() {
@@ -186,7 +189,7 @@ initZookeeperConf() {
 	for (( j=0; j<${length}; j++ ));
 	do
 		# printf  "Current index %d with value %s\n" $j "${zookeeper_nodes[$j]}"
-		ssh -i /home/pulsar/.ssh/pulsar-cloud.pem $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p $data_dir; sudo chown -R $user:$user $data_dir; echo $j > $data_dir/myid"
+		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p $data_dir; sudo chown -R $user:$user $data_dir; echo $j > $data_dir/myid"
 		echo "server.$j=${zookeeper_nodes[$j]}:2888:3888" >> $initZKConf
 	done
 	# cat $initZKConf
@@ -227,8 +230,8 @@ initBookieConf() {
 	for (( j=0; j<${length}; j++ ));
 	do
 		# printf  "Current index %d with value %s\n" $j "${zookeeper_nodes[$j]}"
-		ssh -i /home/pulsar/.ssh/pulsar-cloud.pem $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p /{journal01,journal02,ledger01,ledger02}"
-		ssh -i /home/pulsar/.ssh/pulsar-cloud.pem $user@"${zookeeper_nodes[$j]}" "sudo chown -R $user:$user /journal01; sudo chown -R $user:$user /journal02; sudo chown -R $user:$user /ledger01; sudo chown -R $user:$user /ledger02"
+		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo mkdir -p /{journal01,journal02,ledger01,ledger02}"
+		$ssh_cmd $user@"${zookeeper_nodes[$j]}" "sudo chown -R $user:$user /journal01; sudo chown -R $user:$user /journal02; sudo chown -R $user:$user /ledger01; sudo chown -R $user:$user /ledger02"
 	done
 	
 	dispatchConfWithFile bookie $initBookiesConf	
@@ -440,36 +443,36 @@ installGrafana() {
 # Prepare Client Node
 startHttpd
 initClientTools
-copyDeployTools
+# copyDeployTools
 
-# JDK and prepare tarball
-installJDK $needInstallJDK11
-dispatchPkgs
+# # JDK and prepare tarball
+# installJDK $needInstallJDK11
+# dispatchPkgs
 
-# Deploy and start Zookeeper
-initZookeeperConf
-startAllZookeepers.sh
+# # Deploy and start Zookeeper
+# initZookeeperConf
+# startAllZookeepers.sh
 
-# Init Pulsar metadata in zookeeper
-initPulsarMetadata
+# # Init Pulsar metadata in zookeeper
+# initPulsarMetadata
 
-# Deploy and start Booies
-initBookieConf
-startAllBookies.sh
-testBookies
+# # Deploy and start Booies
+# initBookieConf
+# startAllBookies.sh
+# testBookies
 
-# Deploy and start Brokers
-initBrokerConf
-startAllBrokers.sh
-replaceClientConf
-crateTenantAndNamespace
-testBrokers
+# # Deploy and start Brokers
+# initBrokerConf
+# startAllBrokers.sh
+# replaceClientConf
+# crateTenantAndNamespace
+# testBrokers
 
-# Deploy monitors 
-installNodeExporter
-testDispachHostNodeExporter
-installProm
-installGrafana
+# # Deploy monitors 
+# installNodeExporter
+# testDispachHostNodeExporter
+# installProm
+# installGrafana
 
-printHello
+# printHello
 
