@@ -140,8 +140,10 @@ startHttpd() {
 	sudo yum list httpd > ./httpd-yum-list.log 2>&1
 	if [[ -f ./httpd-yum-list.log && $(grep -c "httpd.x86_64" ./httpd-yum-list.log) -ne 0 ]]; then
 		rm ./httpd-yum-list.log
+		echo "1"
 	else
 		sudo yum -y install httpd
+		echo "2"
 	fi
 
 	sudo systemctl start httpd
@@ -165,24 +167,24 @@ startHttpd() {
 installJDK() {
 	need=$1
 	if [[ $need == "true" ]]; then
-		ssh2all "wget -q $dispatch_host/pulsar/scripts/install-jdk11.sh -O install-jdk11.sh"
-		ssh2all "sudo sh install-jdk11.sh"
-		ssh2all "java -version"
-		ssh2all "source /etc/profile; java -version"
+		go2all "wget -q $dispatch_host/pulsar/scripts/install-jdk11.sh -O install-jdk11.sh"
+		go2all "sudo sh install-jdk11.sh"
+		go2all "java -version"
+		go2all "source /etc/profile; java -version"
 	fi
 }
 
 dispatchPkgs() {
-	ssh2all "rm -rf ~/pulsar-node"
+	go2all "rm -rf ~/pulsar-node"
 	echo $pulsar_tarball
-	ssh2all "wget -q $dispatch_host/pulsar/pkgs/$pulsar_tarball -O $pulsar_tarball" 
-	ssh2all "tar zxf $pulsar_tarball"
-	ssh2all "mv $pulsar_version $pulsar_deploy_dir"
-	ssh2all "wget -q $dispatch_host/pulsar/scripts/replace-conf.sh -O $pulsar_deploy_dir/bin/replace-conf.sh"
-	ssh2all "chmod u+x $pulsar_deploy_dir/bin/replace-conf.sh"
-	ssh2all "rm $pulsar_tarball"
-	ssh2all "mkdir -p $pulsar_home/conf.version"
-	ssh2all "mkdir -p $pulsar_home/conf.bak"
+	go2all "wget -q $dispatch_host/pulsar/pkgs/$pulsar_tarball -O $pulsar_tarball" 
+	go2all "tar zxf $pulsar_tarball"
+	go2all "mv $pulsar_version $pulsar_deploy_dir"
+	go2all "wget -q $dispatch_host/pulsar/scripts/replace-conf.sh -O $pulsar_deploy_dir/bin/replace-conf.sh"
+	go2all "chmod u+x $pulsar_deploy_dir/bin/replace-conf.sh"
+	go2all "rm $pulsar_tarball"
+	go2all "mkdir -p $pulsar_home/conf.version"
+	go2all "mkdir -p $pulsar_home/conf.bak"
 }
 
 initZookeeperConf() {
@@ -343,16 +345,16 @@ installNodeExporter() {
 		${echo_with_date} "9100 exist, skip install node-exporter."
 	else
 		${echo_with_date} "Start deploy node-exporter on all nodes."
-		ssh2all "sudo wget $dispatch_host/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
-		ssh2all "cd /var; sudo tar zxf node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
-		ssh2all "sudo rm /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
+		go2all "sudo wget $dispatch_host/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
+		go2all "cd /var; sudo tar zxf node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
+		go2all "sudo rm /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 			
-		ssh2all "wget $dispatch_host/node_exporter.service"
-		ssh2all "sudo mv node_exporter.service /etc/systemd/system/"
+		go2all "wget $dispatch_host/node_exporter.service"
+		go2all "sudo mv node_exporter.service /etc/systemd/system/"
 		
-		ssh2all "sudo systemctl daemon-reload"
-		ssh2all "sudo systemctl start node_exporter"
-		ssh2all "sudo systemctl enable node_exporter"		
+		go2all "sudo systemctl daemon-reload"
+		go2all "sudo systemctl start node_exporter"
+		go2all "sudo systemctl enable node_exporter"		
 	fi
 }
 
@@ -454,34 +456,34 @@ startHttpd
 initClientTools
 copyDeployTools
 
-# # JDK and prepare tarball
+# JDK and prepare tarball
 installJDK $needInstallJDK11
-dispatchPkgs
+# dispatchPkgs
 
-# # Deploy and start Zookeeper
-initZookeeperConf
-startAllZookeepers.sh
+# Deploy and start Zookeeper
+# initZookeeperConf
+# startAllZookeepers.sh
 
-# # Init Pulsar metadata in zookeeper
-initPulsarMetadata
+# Init Pulsar metadata in zookeeper
+# initPulsarMetadata
 
-# # Deploy and start Booies
-initBookieConf
-startAllBookies.sh
-testBookies
+# Deploy and start Booies
+# initBookieConf
+# startAllBookies.sh
+# testBookies
 
-# # Deploy and start Brokers
-initBrokerConf
-startAllBrokers.sh
-replaceClientConf
-crateTenantAndNamespace
-testBrokers
+# Deploy and start Brokers
+# initBrokerConf
+# startAllBrokers.sh
+# replaceClientConf
+# crateTenantAndNamespace
+# testBrokers
 
-# # Deploy monitors 
-installNodeExporter
-testDispachHostNodeExporter
-installProm
-installGrafana
+# Deploy monitors 
+# installNodeExporter
+# testDispachHostNodeExporter
+# installProm
+# installGrafana
 
-printHello
+# printHello
 

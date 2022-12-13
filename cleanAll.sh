@@ -15,7 +15,7 @@ ssh2bookies "rm -rf {$bk_journalDirectory,$bk_ledgerDirectories}"
 ssh2zookeepers "rm -rf $zk_data_dir"
 
 # 删除 node 目录
-ssh2all "rm -rf $pulsar_home"
+go2all "rm -rf $pulsar_home"
 
 rm -rf /home/pulsar/grafana-9.1.2
 rm -rf /home/pulsar/prometheus-2.38.0.linux-amd64
