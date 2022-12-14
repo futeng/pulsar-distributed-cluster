@@ -31,4 +31,4 @@ fi
 source /etc/profile
 java -version
 
-rm -f install_jdk11.sh
+rm -f ~/install-jdk11.sh ~/yum.log

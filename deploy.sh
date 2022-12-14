@@ -18,19 +18,64 @@ echo "                                                   ";
 }
 
 ## Conditions
-# [] 1. Dispatch nodes can access all nodes without entering a password.
-# [] 2. Dispatch nodes users have sudo permissions (httpd needs to be turned on).
-# [] 3. Configured the /etc/hosts of all the nodes , and make sure the hostnames are correct.
-# [] 4. Configured time synchronization.
-# [] 5. Modify the custom storage directory directly in the function. initBookieConf
-# [] 6. We need download pkgs put into dir: deploy-pulsar/pkgs
+note=$(cat <<- EOF
+中文说明：
 
-# Current version
-# apache-pulsar-2.10.1.7-bin.tar.gz
-# grafana-enterprise-9.1.2.linux-amd64.tar.gz
-# node_exporter-1.4.0-rc.0.linux-amd64.tar.gz
-# prometheus-2.38.0.linux-amd64.tar.gz
-# pulsar-protocol-handler-kafka-2.10.1.7.nar
+欢迎使用 pulsar-distributed-cluster 项目！
+
+在进一步执行脚本前，请确认以下条件，注意，所有条件均需满足：
+
+1. 所有服务器节点之间可通过 hostname 互相访问（可通过配置 /etc/hosts 来实现）；
+2. 所有服务器节点 ssh 需要正常初始化（可通过 ssh-keygen 生成 ssh 需要的信息）；
+3. 部署客户端所在机器（Dispatch  node），需要配置到其他所有节点的免密登录（包括自己）（可通过 ssh-copy-id 配置）；
+4. 所有服务器节点部署用户，需要具备 sudo 且免输入密码权限（类似 futeng  ALL=(ALL)       NOPASSWD: ALL，注意别被 wheel 等用户覆盖）；
+5. 所有服务器节点间时间需要同步（可通过 ntp 等配置）；
+6. 所有服务器节点的 basic yum 需要正确配置（可通过 sudo yum clean all && sudo yum makecache fast来验证 ）；
+7. 所有节点的需要关闭防火墙（可通过 sudo systemctl stop firewalld; sudo systemctl disable firewalld 来配置）；
+8. 需要配置 bin/cluster.sh 脚本，注意每个属性都要配置，里面包含集群名称、使用的端口和存储目录位置等；
+9. 需要将部署需要的安装包手动下载到 pkgs/ 目录下。当前支持的版本如下，可到这里下载（不包含 JDK）:https://github.com/futeng/pulsar-distributed-cluster/releases/tag/v0.1 ；
+
+English explanation:
+Welcome to the pulsar-distributed-cluster Project!
+Before proceeding further with the script, make sure that the following conditions are met:
+1. All the server nodes can access each other by hostname (which can be done by configuring/etc/hosts)
+2. All server nodes SSH needs to be initialized properly (ssh-keygen generates the information SSH needs) ;
+3. Deploy the Dispatch node on a machine that needs to be configured to all other nodes (including itself) with a secret-free login (which can be configured with ssh-copy-id) ;
+Four. All server nodes deploy users with Sudo and password-free access (similar to futeng ALL = (ALL) NOPASSWD: ALL, but do not be overridden by users such as wheel) ;
+5. All the server nodes need to synchronize time (can be configured through NTP, etc.) ;
+6. Basic Yum needs to be properly configured for all server nodes (verified by Sudo Yum Clean All & & Sudo Yum Makecache Fast) ;
+Seven. All nodes that need to shut down the firewall (can be configured by Sudo systemctl stop firewall; SUDO systemctl disable firewall) ;
+8. You need to configure the bin cluster.sh script, noting that each property is configured with the cluster name, the port to use, the location of the storage directory, and so on;
+9. You need to manually download the installation packages required for deployment to the pkgs/ directory. The currently supported versions are as follows and can be downloaded here (not including the JDK) : https://github.com/futeng/pulsar-distributed-cluster/releases/tag/v0.1;
+
+Current pkgs versions:
+
+apache-pulsar-2.10.1.7-bin.tar.gz
+grafana-enterprise-9.1.2.linux-amd64.tar.gz
+jdk-11.0.15.1_linux-x64_bin.tar.gz
+node_exporter-1.4.0-rc.0.linux-amd64.tar.gz
+prometheus-2.38.0.linux-amd64.tar.gz
+pulsar-protocol-handler-kafka-2.10.1.7.nar
+
+EOF
+)
+
+read -r -p "$note ========>  Are you sure all the conditions are met and continue with the installation? [Y/n] " input
+
+case $input in
+    [yY][eE][sS]|[yY])
+        echo "Yes"
+        ;;
+
+    [nN][oO]|[nN])
+        echo "No"
+           ;;
+
+    *)
+        echo "Invalid input..."
+        exit 1
+        ;;
+esac
 
 #####################################################
 ################# Custom variables ##################
@@ -184,6 +229,10 @@ dispatchPkgs() {
 	go2all "rm $pulsar_tarball"
 	go2all "mkdir -p $pulsar_home/conf.version"
 	go2all "mkdir -p $pulsar_home/conf.bak"
+}
+
+replaceLog4j2() {
+	go2brokers "sed -i 's/immediateFlush: false/immediateFlush: true/' $pulsar_home/conf/log4j2.yaml"
 }
 
 initZookeeperConf() {
@@ -485,8 +534,10 @@ copyDeployTools
 # JDK and prepare tarball
 installJDK $needInstallJDK11
 dispatchPkgs
+replaceLog4j2
 
 # Deploy and start Zookeeper
+replaceLog4j2
 initZookeeperConf
 startAllZookeepers.sh
 
