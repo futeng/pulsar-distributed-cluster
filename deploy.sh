@@ -63,6 +63,8 @@ initClientTools() {
 
 
 	sed -i "s/DISPATCH_HOST=\"pulsar-client\"/DISPATCH_HOST=\"$dispatch_host\"/" bin/dispatchConfWithFile
+	sed -i "s/PULSAR-CLIENT/$dispatch_host/" scripts/install-jdk11.sh
+
 
 	if [ -d ./tmpbin ] ; then
 		rm -rf ./tmpbin
@@ -249,7 +251,7 @@ initBookieConf() {
 }
 
 testBookies() {
-	ssh2bookies "source /etc/profile; $pulsar_home/bin/bookkeeper shell simpletest --ensemble 2 --writeQuorum 2 --ackQuorum 2 --numEntries 10" > $pulsar_base/10_entries_written.log 2>&1 
+	go2bookies "source /etc/profile; $pulsar_home/bin/bookkeeper shell simpletest --ensemble 2 --writeQuorum 2 --ackQuorum 2 --numEntries 10" > $pulsar_base/10_entries_written.log 2>&1 
 	length=${#bookie_nodes[@]}
 
  	if [[ -f $pulsar_base/10_entries_written.log && $(grep -c "10 entries written" $pulsar_base/10_entries_written.log) -eq $length ]]; then
@@ -345,7 +347,7 @@ installNodeExporter() {
 		${echo_with_date} "9100 exist, skip install node-exporter."
 	else
 		${echo_with_date} "Start deploy node-exporter on all nodes."
-		go2all "sudo wget $dispatch_host/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
+		go2all "sudo wget $dispatch_host/pulsar/pkgs/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 		go2all "cd /var; sudo tar zxf node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 		go2all "sudo rm /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 			
@@ -378,12 +380,12 @@ installProm() {
 		${echo_with_date} "9090 exist, skip install prometheus."
 	else
 		cd $pulsar_base/
-		wget -q $dispatch_host/prometheus-2.38.0.linux-amd64.tar.gz -O prometheus-2.38.0.linux-amd64.tar.gz
+		wget -q $dispatch_host/pulsar/pkgs/prometheus-2.38.0.linux-amd64.tar.gz -O prometheus-2.38.0.linux-amd64.tar.gz
 		tar zxf prometheus-2.38.0.linux-amd64.tar.gz 
 		rm prometheus-2.38.0.linux-amd64.tar.gz
 	
 		prometheus_yml="$pulsar_base/prometheus-2.38.0.linux-amd64/prometheus.yml"
-		wget -q $dispatch_host/prometheus.yml.template -O $prometheus_yml
+		wget -q $dispatch_host/pulsar/conf/prometheus.yml.template -O $prometheus_yml
 	
 		all_nodes_str=""
 		bookie_nodes_str=""
@@ -438,7 +440,7 @@ installGrafana() {
 		${echo_with_date} "3000 exist, skip install grafana."
 	else
 		cd $pulsar_base/
-		wget -q $dispatch_host/grafana-enterprise-9.1.2.linux-amd64.tar.gz -O grafana-enterprise-9.1.2.linux-amd64.tar.gz
+		wget -q $dispatch_host/pulsar/pkgs/grafana-enterprise-9.1.2.linux-amd64.tar.gz -O grafana-enterprise-9.1.2.linux-amd64.tar.gz
 		tar zxf grafana-enterprise-9.1.2.linux-amd64.tar.gz 
 		rm grafana-enterprise-9.1.2.linux-amd64.tar.gz
 		cd grafana-9.1.2

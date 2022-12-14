@@ -8,18 +8,18 @@
 #####################################################
 ################# Custom variables ##################
 
-needInstallJDK11="false"
+needInstallJDK11="true"
 needInitializeClusterMetadata="true"
 
 # 如果需要 pem 文件登录，则 need 置为 true，且 pem 文件位置要填写，主要不要更改 ssh -i 的前缀
 ssh_cmd="ssh"
 #ssh_cmd="ssh -i /home/pulsar/.ssh/pulsar-cloud.pem"
 
-all_nodes=("vm11" "vm12" "vm13")
-bookie_nodes=("vm11" "vm12" "vm13")
-zookeeper_nodes=("vm11" "vm12" "vm13")
-broker_nodes=("vm12" "vm13")
-dispatch_host="vm11"
+all_nodes=("vm17" "vm18" "vm19")
+bookie_nodes=("vm17" "vm18" "vm19")
+zookeeper_nodes=("vm17" "vm18" "vm19")
+broker_nodes=("vm18" "vm19")
+dispatch_host="vm17"
 
 # The user used by the deployment and have to get the sudo privilege.
 user="futeng"

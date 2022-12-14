@@ -3,7 +3,7 @@
 yum -y install tar wget
 mkdir -p /opt/java
 cd /opt/java
-wget http://pulsar-client/jdk-11.0.15.1_linux-x64_bin.tar.gz
+wget http://PULSAR-CLIENT/pulsar/pkgs/jdk-11.0.15.1_linux-x64_bin.tar.gz
 tar zxvf jdk-11.0.15.1_linux-x64_bin.tar.gz
 rm jdk-11.0.15.1_linux-x64_bin.tar.gz
 
