@@ -142,10 +142,8 @@ startHttpd() {
 	sudo yum list httpd > ./httpd-yum-list.log 2>&1
 	if [[ -f ./httpd-yum-list.log && $(grep -c "httpd.x86_64" ./httpd-yum-list.log) -ne 0 ]]; then
 		rm ./httpd-yum-list.log
-		echo "1"
 	else
 		sudo yum -y install httpd
-		echo "2"
 	fi
 
 	sudo systemctl start httpd
@@ -171,8 +169,7 @@ installJDK() {
 	if [[ $need == "true" ]]; then
 		go2all "wget -q $dispatch_host/pulsar/scripts/install-jdk11.sh -O install-jdk11.sh"
 		go2all "sudo sh install-jdk11.sh"
-		go2all "java -version"
-		go2all "source /etc/profile; java -version"
+		go2all "source /etc/profile;"
 	fi
 }
 
@@ -347,11 +344,11 @@ installNodeExporter() {
 		${echo_with_date} "9100 exist, skip install node-exporter."
 	else
 		${echo_with_date} "Start deploy node-exporter on all nodes."
-		go2all "sudo wget $dispatch_host/pulsar/pkgs/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
+		go2all "sudo wget -q $dispatch_host/pulsar/pkgs/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz -O /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 		go2all "cd /var; sudo tar zxf node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 		go2all "sudo rm /var/node_exporter-1.4.0-rc.0.linux-amd64.tar.gz"
 			
-		go2all "wget $dispatch_host/node_exporter.service"
+		go2all "wget -q $dispatch_host/pulsar/service/node_exporter.service"
 		go2all "sudo mv node_exporter.service /etc/systemd/system/"
 		
 		go2all "sudo systemctl daemon-reload"
@@ -385,7 +382,7 @@ installProm() {
 		rm prometheus-2.38.0.linux-amd64.tar.gz
 	
 		prometheus_yml="$pulsar_base/prometheus-2.38.0.linux-amd64/prometheus.yml"
-		wget -q $dispatch_host/pulsar/conf/prometheus.yml.template -O $prometheus_yml
+		wget -q $dispatch_host/pulsar/service/prometheus.yml.template -O $prometheus_yml
 	
 		all_nodes_str=""
 		bookie_nodes_str=""
@@ -435,6 +432,7 @@ installProm() {
 }
 
 installGrafana() {
+
 	if check_port 3000
 	then
 		${echo_with_date} "3000 exist, skip install grafana."
@@ -443,7 +441,33 @@ installGrafana() {
 		wget -q $dispatch_host/pulsar/pkgs/grafana-enterprise-9.1.2.linux-amd64.tar.gz -O grafana-enterprise-9.1.2.linux-amd64.tar.gz
 		tar zxf grafana-enterprise-9.1.2.linux-amd64.tar.gz 
 		rm grafana-enterprise-9.1.2.linux-amd64.tar.gz
-		cd grafana-9.1.2
+
+		# datasource
+		cd $pulsar_base/grafana-9.1.2/conf/provisioning/datasources
+
+		wget -q $dispatch_host/pulsar/service/datasource-pulsar.yml.template -O pulsar.yml
+		sed -i "s/PULSAR_DATASOURCE/$cluster_name/g" pulsar.yml
+		sed -i "s/PULSAR_PROMETHEUS_URL/$dispatch_host/g" pulsar.yml
+
+		# pulsar.yaml
+		
+		cd $pulsar_base/grafana-9.1.2/conf/provisioning/dashboards
+		wget -q $dispatch_host/pulsar/service/dashboards.yml.template -O dashboards.yml
+		rm sample.yaml
+		pulsar_dashboards_path=$pulsar_base/grafana-9.1.2/pulsar-dashboards
+		mkdir $pulsar_dashboards_path
+		sed -i "s|PULSAR_DASHBOARDS_PATH|$pulsar_dashboards_path|g" dashboards.yml
+
+		# dashboards
+		cd $pulsar_dashboards_path
+		wget http://$dispatch_host/pulsar/service/dashboards.template/  -r -q -nd -np -k -L -R '*index.html[?]C=?;O=?'
+		for item in $(ls .); do 
+			echo $item;
+			sed -i "s/PULSAR_DATASOURCE/$cluster_name/g" $item
+		done
+
+
+		cd $pulsar_base/grafana-9.1.2
 		nohup bin/grafana-server web > grafana.log 2>&1 &
 		${echo_with_date} "[/][√] Your Grafana is ready. Please login using admin/admin and reset it: $dispatch_host:3000"
 	fi
@@ -453,39 +477,40 @@ installGrafana() {
 #####################################################
 ##########          Start deploy         ############
 
-# Prepare Client Node
+# Prepare dispatch Node
 startHttpd
 initClientTools
 copyDeployTools
 
 # JDK and prepare tarball
 installJDK $needInstallJDK11
-# dispatchPkgs
+dispatchPkgs
 
 # Deploy and start Zookeeper
-# initZookeeperConf
-# startAllZookeepers.sh
+initZookeeperConf
+startAllZookeepers.sh
 
 # Init Pulsar metadata in zookeeper
-# initPulsarMetadata
+initPulsarMetadata
 
 # Deploy and start Booies
-# initBookieConf
-# startAllBookies.sh
-# testBookies
+initBookieConf
+startAllBookies.sh
+testBookies
 
 # Deploy and start Brokers
-# initBrokerConf
-# startAllBrokers.sh
-# replaceClientConf
-# crateTenantAndNamespace
-# testBrokers
+initBrokerConf
+startAllBrokers.sh
+replaceClientConf
+crateTenantAndNamespace
+testBrokers
 
 # Deploy monitors 
-# installNodeExporter
-# testDispachHostNodeExporter
-# installProm
-# installGrafana
+installNodeExporter
+testDispachHostNodeExporter
+installProm
+installGrafana
 
-# printHello
+# Enjoy!
+printHello
 

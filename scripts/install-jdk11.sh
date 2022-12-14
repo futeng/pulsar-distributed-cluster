@@ -2,7 +2,7 @@
 
 yum -y install tar wget > ./yum.log 2>&1
 
-url="http://PULSAR-CLIENT/pulsar/pkgs/jdk-11.0.15.1_linux-x64_bin.tar.gz"
+url="http://vm17/pulsar/pkgs/jdk-11.0.15.1_linux-x64_bin.tar.gz"
 if [[ $(grep -c "pulsar-distributed-cluster-jdk11" /etc/profile) -ne 0 ]]; then 
 	echo "[$(hostname)]exec> The JDK is already installed and will be skipped."; 
 else 
@@ -11,7 +11,7 @@ else
 	cd /opt/java
 	
 	echo "[$(hostname)]exec> Download JDK from : $url"
-	wget -q http://PULSAR-CLIENT/pulsar/pkgs/jdk-11.0.15.1_linux-x64_bin.tar.gz
+	wget -q http://vm17/pulsar/pkgs/jdk-11.0.15.1_linux-x64_bin.tar.gz
 	tar zxf jdk-11.0.15.1_linux-x64_bin.tar.gz
 	rm jdk-11.0.15.1_linux-x64_bin.tar.gz
 	
