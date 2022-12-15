@@ -457,13 +457,13 @@ installProm() {
 		length=${#broker_nodes[@]}
 		for (( j=0; j<${length}; j++ ));
 		do
-			broker_nodes_str="$broker_nodes_str        - '${broker_nodes[$j]}:8000'\n"
+			broker_nodes_str="$broker_nodes_str        - '${broker_nodes[$j]}:8080'\n"
 		done
 		
 		length=${#zookeeper_nodes[@]}
 		for (( j=0; j<${length}; j++ ));
 		do
-			zookeeper_nodes_str="$zookeeper_nodes_str        - '${zookeeper_nodes[$j]}:8000'\n"
+			zookeeper_nodes_str="$zookeeper_nodes_str        - \'${zookeeper_nodes[$j]}:$zk_metricsProvider_httpPort\'\n"
 		done
 	
 		IFS="$oldIFS"
