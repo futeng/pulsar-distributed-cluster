@@ -128,7 +128,7 @@ initClientTools() {
 	do
 		echo "${bookie_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-bookies
 		echo "#!/bin/bash" > ./tmpbin/"go2bookie$j"
-		echo "$ssh_cmd pulsar@${bookie_nodes[$j]}" >> ./tmpbin/"go2bookie$j"
+		echo "$ssh_cmd $user@${bookie_nodes[$j]}" >> ./tmpbin/"go2bookie$j"
 	done
 	
 	length=${#broker_nodes[@]}
@@ -136,7 +136,7 @@ initClientTools() {
 	do
 		echo "${broker_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-brokers
 		echo "#!/bin/bash" > ./tmpbin/"go2broker$j"
-		echo "$ssh_cmd pulsar@${broker_nodes[$j]}" >> ./tmpbin/"go2broker$j"
+		echo "$ssh_cmd $user@${broker_nodes[$j]}" >> ./tmpbin/"go2broker$j"
 	done
 	
 	length=${#zookeeper_nodes[@]}
@@ -144,7 +144,7 @@ initClientTools() {
 	do
 		echo "${zookeeper_nodes[$j]}" >> ./tmpbin/pulsar-hosts-only-zookeepers
 		echo "#!/bin/bash" > ./tmpbin/"go2zk$j"
-		echo "$ssh_cmd pulsar@${zookeeper_nodes[$j]}" >> ./tmpbin/"go2zk$j"
+		echo "$ssh_cmd $user@${zookeeper_nodes[$j]}" >> ./tmpbin/"go2zk$j"
 	done
 	
 	echo "#!/bin/bash" > ./tmpbin/startAllBookies.sh
