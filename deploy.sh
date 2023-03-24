@@ -109,7 +109,7 @@ initClientTools() {
 
 
 	sed -i "s/DISPATCH_HOST=\"pulsar-client\"/DISPATCH_HOST=\"$dispatch_host\"/" bin/dispatchConfWithFile
-	sed -i "s/PULSAR-CLIENT/$dispatch_host/" scripts/install-jdk11.sh
+	sed -i "s/DISPATCH_HOST/$dispatch_host/" scripts/install-jdk11.sh
 
 
 	if [ -d ./tmpbin ] ; then
@@ -196,6 +196,7 @@ startHttpd() {
 	sudo systemctl enable httpd
 	sudo mkdir -p /var/www/html/pulsar/conf
 	sudo chown -R  $user:$user /var/www/html/pulsar
+        sudo chcon -R -t httpd_sys_content_t /var/www/html
 	echo "httpd" > /var/www/html/pulsar/httpd.html 
 
 	wget -q $dispatch_host/pulsar/httpd.html -O httpd.html
