@@ -182,21 +182,41 @@ copyDeployTools() {
 }
 
 
-# 所有的文件都放在子目录 http://node/pulsar 下面
+# http://node/pulsar 
 startHttpd() {
 
-	sudo yum list httpd > ./httpd-yum-list.log 2>&1
-	if [[ -f ./httpd-yum-list.log && $(grep -c "httpd.x86_64" ./httpd-yum-list.log) -ne 0 ]]; then
-		rm ./httpd-yum-list.log
+	systemctl status httpd > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+    	echo "[info] httpd service exists."
 	else
-		sudo yum -y install httpd
+    	echo "[info] start install httpd service."
+
+	    # install epel
+	    #yum install -y epel-release
+
+	    # install httpd
+	    sudo yum install -y httpd
+
+	    # Start httpd service
+	    sudo systemctl enable httpd
+	    sudo systemctl start httpd
+
+	    # health check
+	    systemctl status httpd > /dev/null 2>&1
+	    if [ $? -eq 0 ]; then
+	        echo "[info] httpd start successfuly."
+
+
+
+	    else
+	        echo "[error] httpd start failed."
+	        exit 1
+	    fi
 	fi
 
-	sudo systemctl start httpd
-	sudo systemctl enable httpd
 	sudo mkdir -p /var/www/html/pulsar/conf
 	sudo chown -R  $user:$user /var/www/html/pulsar
-        sudo chcon -R -t httpd_sys_content_t /var/www/html
+    sudo chcon -R -t httpd_sys_content_t /var/www/html
 	echo "httpd" > /var/www/html/pulsar/httpd.html 
 
 	wget -q $dispatch_host/pulsar/httpd.html -O httpd.html
