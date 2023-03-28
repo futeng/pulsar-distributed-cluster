@@ -24,7 +24,8 @@ do
   #parameter_value=${line#*=}
   #echo $parameter_name
   #echo $parameter_value
-  sed -i "/$parameter_name/d" $DEST
+  #sed -i "/$parameter_name/d" $DEST
+  sed -i "\#${parameter_name}#d" $DEST
   echo $line >> $DEST
 done
 
